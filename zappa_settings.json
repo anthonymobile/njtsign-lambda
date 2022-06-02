@@ -1,0 +1,10 @@
+{
+    "dev": {
+        "app_function": "app.app",
+        "aws_region": "us-east-2",
+        "profile_name": "starcitygroup_admin",
+        "project_name": "njtsign-lambda",
+        "runtime": "python3.9",
+        "s3_bucket": "zappa-8lhp5pdwt"
+    }
+}

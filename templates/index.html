@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}NJTransit BusWatcher v3.0{% endblock %}
+{% block head %}
+  {{ super() }}
+  <title>NJTransit BusWatcher 3.0</title>
+{% endblock %}
+{% block content %}
+
+
+{% if cfg.screen_size == "small" %}
+  {% for arrival in arrivals %}
+    <div class="row align-items-center">
+
+        {% if arrival.occupancy == "LIGHT" %}
+        <div class="container-fluid text-responsive  text-success">
+          {% elif  arrival.occupancy == "MEDIUM"  %}
+            <div class="container-fluid text-responsive  text-warning">
+          {% elif  arrival.occupancy == "HEAVY"  %}
+            <div class="container-fluid text-responsive  text-danger">
+          {% else  %}
+          <div class="container-fluid text-responsive  text-secondary ">
+        {% endif %}
+        
+        <!-- {% if arrival.eta_int <= cfg.leave_alert_cutoff %}
+        <div class="container-fluid text-responsive  text-secondary">
+          {% elif arrival.eta_int > cfg.leave_alert_cutoff and arrival.eta_int <=  (cfg.leave_alert_cutoff+5)%}
+          <div class="container-fluid text-responsive  text-danger">
+          {% else  %}
+          <div class="container-fluid text-responsive ">
+        {% endif %} -->
+
+        <div class="row row-cols-3">
+          <div class="col-2 text-right">{{ arrival.rd }}</div>
+          <div class="col-6">{{ arrival.fd }} </div>
+          <div class="col-4">{% autoescape false %} {{ arrival.pt | approaching_fix}} {% endautoescape %}</div>
+        </div> 
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+
+
+<!-- "big" screen size is mostly deprecated-->
+<!-- "big" screen size is mostly deprecated-->
+{% if cfg.screen_size == "big" %}
+  {% for arrival in arrivals %}
+    <div class="row align-items-center">
+
+        {% if arrival.eta_int <= cfg.leave_alert_cutoff %}
+        <div class="container-fluid text-responsive  text-danger">
+          {% elif arrival.eta_int > cfg.leave_alert_cutoff and arrival.eta_int <=  (cfg.leave_alert_cutoff+5)%}
+          <div class="container-fluid text-responsive  text-success">
+          {% elif arrival.rd in cfg.vip_routes %}
+          <div class="container-fluid text-responsive">
+          {% else  %}
+          <div class="container-fluid text-responsive  text-muted ">
+          {% endif %}
+
+        <div class="row row-cols-3">
+          <div class="col-2 text-right">{{ arrival.rd }}</div>
+          <div class="col-6">{{ arrival.fd }}</div>
+          <div class="col-4">{% autoescape false %} {{ arrival.pt | approaching_fix}} {% endautoescape %}</div>
+        </div> 
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+<!-- "big" screen size is mostly deprecated-->
+<!-- "big" screen size is mostly deprecated-->
+
+{% endblock %}

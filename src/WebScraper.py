@@ -35,6 +35,6 @@ class WebScraper(object):
             for html in htmls:
                 if html is not None:
                     url = html[1]
-                    self.master_dict[url] = {'Raw Html': html[0]}
+                    self.master_dict[url] = {'content': html[0]}
                 else:
                     continue

@@ -1,21 +1,93 @@
-import urllib.request, urllib.error, urllib.parse
+# import requests
 import xml.etree.ElementTree
-import config as cfg
+from operator import itemgetter
+import urllib.request, urllib.error, urllib.parse
+from collections import defaultdict
+
 from lxml import html
-import requests
-from WebScraper import WebScraper
+from src.WebScraper import WebScraper
+
+import config as cfg
+
+def get_arrivals():
+    arrivals = defaultdict(dict)
+    for tuple in cfg.watchlist:
+        stop=tuple[0]
+        routelist = tuple[1]
+        for route in routelist:
+            arrivals[stop][route]=(Service(stop, route).arrival_data)
+    arrivals = get_occupancies(arrivals)
+    arrivals = pare_arrivals(arrivals)
+    arrivals = regroup_arrivals(arrivals)
+    return arrivals
+
+def regroup_arrivals(arrivals):
+    arrivals_board = []
+    for stop, arrival_data in arrivals.items():
+        for route, arrivals_list in arrival_data.items():      
+            for arrival in arrivals_list:
+                arrivals_board.append(arrival)
+    for arrival in arrivals_board:
+        arrival['fd']=headsign_lookup(arrival['fd'])
+    # sort by destination and ETA
+    arrivals_board = sorted(arrivals_board, key=itemgetter('fd', 'rd', 'eta_int'))
+    ##  sort by ETA only
+    # arrivals_board = sorted(arrivals_board, key=itemgetter('eta_int'))
+    return arrivals_board
+
+def headsign_lookup(fd):
+    try:
+        # split off the route number
+        fd = fd.split(" ", 1)[1]
+        fd=cfg.headsign_replacements[fd]
+        return fd
+    except KeyError:
+        return fd
+
+def pare_arrivals(arrivals): #FIXME: type
+    # drop ones under cutoff
+    for stop, arrival_data in arrivals.items():
+        for route, arrivals_list in arrival_data.items():
+            for i,arrival in enumerate(arrivals_list):
+                if int(arrival['eta_int']) > cfg.cutoff:
+                    del arrivals_list[i]
+    return arrivals
+
+def get_occupancies(arrivals):
+    urls = [f"https://www.njtransit.com/my-bus-to?stopID={k}&form=stopID" for (k,v) in arrivals.items()]
+    scrapedata = WebScraper(urls = urls)
+    
+    for url, content in scrapedata.master_dict.items():
+        
+        #FIXME: debug from here
+        tree = html.fromstring(content['content'])
+
+        raw_rows = tree.xpath("//div[@class='media-body']")
+        parsed_rows=[str(row.xpath("string()")) for row in raw_rows]
+        split_rows = [row.split('\n') for row in parsed_rows]
+        stripped_rows = []
+        for row in split_rows:
+            stripped_row = []
+            for word in row:
+                stripped_row.append(word.strip())
+            stripped_rows.append([i for i in stripped_row if i])
+        filtered_rows = [b for b in stripped_rows if len(b)==5]
+          
+        #TODO: this could be optimized, but it works so..
+        for row in filtered_rows:
+            for field in row:
+                # make sure types match
+                try:
+                    if str(field.split('#')[1]) == str(v):
+                        for field in row:
+                            if field in ['LIGHT','MEDIUM','HEAVY']:
+                                return field
+                except Exception as e:
+                    pass
+        return 'N/A'
 
 
-'''
-how to fetch urls async
 
-urls = ['https://understandingdata.com/', 'http://twitter.com/']
-scrapedata = WebScraper(urls = urls)
-
-'''
-
-
-#FIXME: how to log anything in here? move it back to the main?
 class Service:
 
     def __init__(self, stop, route):
@@ -35,7 +107,7 @@ class Service:
             submit_url = arrivals_url % (self.route, self.stop)
             data = urllib.request.urlopen(submit_url).read()
         except urllib.error.HTTPError as e:
-            pass
+            pass  
         except urllib.error.URLError as e:
             pass
         else:
@@ -91,7 +163,9 @@ class Service:
                 except:
                     arrival['eta_int'] = -1
 
-            arrival['occupancy'] = get_occupancy(arrival['stop_id'], arrival['v'])
+            #this is now populated by the init constructor via get_occupancies
+            # arrival['occupancy'] = get_occupancy(arrival['stop_id'], arrival['v'])
+            
 
         return arrivals_list[:cfg.num_arrivials_per_route]
 
@@ -103,46 +177,3 @@ class Service:
             else:
                 continue
         return stop_name
-
-
-#######################################################################################################
-#
-# lxml scraper -- integrate into above (perhaps just add the occupancy to the right service result if we can match it up?)
-# 
-#######################################################################################################
-
-def get_occupancy(stop, v):
-    
-    url=f"https://www.njtransit.com/my-bus-to?stopID={stop}&form=stopID"
-
-    # Request the page and scrape the data
-    try:
-        page = requests.get(url)
-    except:
-        print("error getting web page")
-        
-    tree = html.fromstring(page.content)
-
-    raw_rows = tree.xpath("//div[@class='media-body']")
-    parsed_rows=[str(row.xpath("string()")) for row in raw_rows]
-    split_rows = [row.split('\n') for row in parsed_rows]
-    stripped_rows = []
-    for row in split_rows:
-        stripped_row = []
-        for word in row:
-            stripped_row.append(word.strip())
-        stripped_rows.append([i for i in stripped_row if i])
-    filtered_rows = [b for b in stripped_rows if len(b)==5]
-    
-    #FIXME: this could be optimized, but it works so..
-    for row in filtered_rows:
-        for field in row:
-            # make sure types match
-            try:
-                if str(field.split('#')[1]) == str(v):
-                    for field in row:
-                        if field in ['LIGHT','MEDIUM','HEAVY']:
-                            return field
-            except:
-                pass
-    return 'N/A'

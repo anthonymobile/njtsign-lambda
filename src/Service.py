@@ -54,14 +54,15 @@ def pare_arrivals(arrivals): #FIXME: type
     return arrivals
 
 def get_occupancies(arrivals):
-    urls = [f"https://www.njtransit.com/my-bus-to?stopID={k}&form=stopID" for (k,v) in arrivals.items()]
-    scrapedata = WebScraper(urls = urls)
     
-    for url, content in scrapedata.master_dict.items():
-        
-        #FIXME: debug from here
-        tree = html.fromstring(content['content'])
-
+    urls = [f"https://www.njtransit.com/my-bus-to?stopID={k}&form=stopID" for (k,v) in arrivals.items()]
+    occupancy_data = WebScraper(urls = urls)
+    
+    occupancies=dict()
+    
+    # traverse occupancy_data.master_dict.items() and create a dict of v, occupancy
+    for url, response in occupancy_data.master_dict.items():
+        tree = html.fromstring(response['content'])
         raw_rows = tree.xpath("//div[@class='media-body']")
         parsed_rows=[str(row.xpath("string()")) for row in raw_rows]
         split_rows = [row.split('\n') for row in parsed_rows]
@@ -72,20 +73,25 @@ def get_occupancies(arrivals):
                 stripped_row.append(word.strip())
             stripped_rows.append([i for i in stripped_row if i])
         filtered_rows = [b for b in stripped_rows if len(b)==5]
-          
-        #TODO: this could be optimized, but it works so..
         for row in filtered_rows:
-            for field in row:
-                # make sure types match
-                try:
-                    if str(field.split('#')[1]) == str(v):
-                        for field in row:
-                            if field in ['LIGHT','MEDIUM','HEAVY']:
-                                return field
-                except Exception as e:
-                    pass
-        return 'N/A'
+            v = row[1].split('#')[1]
+            occupancies[v] = row[4]
 
+    
+    # # now we need to match up the scrapedata to the arrivals with zip?
+    # arrivals_with_occupancies = list(zip (arrivals.items(),occupancy_data.master_dict.items()))
+    
+    # traverse the arrivals dict add the occupancy for each
+    for stop, arrival_dict in arrivals.items():
+        for route, arrivals_at_stop_on_route in arrival_dict.items():
+            position = 0
+            for a in arrivals_at_stop_on_route:              
+                arrivals[stop][route][position]['occupancy'] = occupancies[a['v']]
+                position += 1
+
+    
+    # until we update arrivals its just passing through here
+    return arrivals
 
 
 class Service:

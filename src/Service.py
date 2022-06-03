@@ -53,14 +53,16 @@ def pare_arrivals(arrivals): #FIXME: type
                     del arrivals_list[i]
     return arrivals
 
+
+#TODO: this works, and is fast, but its ugly.
 def get_occupancies(arrivals):
-    
+
+    #async fetch occupancy data    
     urls = [f"https://www.njtransit.com/my-bus-to?stopID={k}&form=stopID" for (k,v) in arrivals.items()]
     occupancy_data = WebScraper(urls = urls)
     
+    # traverse occupancy_data.master_dict.items() and create a lookup dict of v, occupancy
     occupancies=dict()
-    
-    # traverse occupancy_data.master_dict.items() and create a dict of v, occupancy
     for url, response in occupancy_data.master_dict.items():
         tree = html.fromstring(response['content'])
         raw_rows = tree.xpath("//div[@class='media-body']")
@@ -77,10 +79,6 @@ def get_occupancies(arrivals):
             v = row[1].split('#')[1]
             occupancies[v] = row[4]
 
-    
-    # # now we need to match up the scrapedata to the arrivals with zip?
-    # arrivals_with_occupancies = list(zip (arrivals.items(),occupancy_data.master_dict.items()))
-    
     # traverse the arrivals dict add the occupancy for each
     for stop, arrival_dict in arrivals.items():
         for route, arrivals_at_stop_on_route in arrival_dict.items():
@@ -88,8 +86,7 @@ def get_occupancies(arrivals):
             for a in arrivals_at_stop_on_route:              
                 arrivals[stop][route][position]['occupancy'] = occupancies[a['v']]
                 position += 1
-
-    
+  
     # until we update arrivals its just passing through here
     return arrivals
 

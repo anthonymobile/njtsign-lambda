@@ -1,4 +1,3 @@
-# import requests
 import xml.etree.ElementTree
 from operator import itemgetter
 import urllib.request, urllib.error, urllib.parse
@@ -44,7 +43,7 @@ def headsign_lookup(fd):
     except KeyError:
         return fd
 
-def pare_arrivals(arrivals): #FIXME: type
+def pare_arrivals(arrivals):
     # drop ones under cutoff
     for stop, arrival_data in arrivals.items():
         for route, arrivals_list in arrival_data.items():
@@ -154,7 +153,6 @@ class Service:
             if arrival['pt']:
 
                 # first see if its special, if so, recode then skip rest of loop
-
                 if arrival['pt'] in cfg.pt_messages:
                     arrival['eta_int'] = cfg.pt_messages[arrival['pt']]
                     continue
@@ -165,10 +163,6 @@ class Service:
                 # unless its a new special message
                 except:
                     arrival['eta_int'] = -1
-
-            #this is now populated by the init constructor via get_occupancies
-            # arrival['occupancy'] = get_occupancy(arrival['stop_id'], arrival['v'])
-            
 
         return arrivals_list[:cfg.num_arrivials_per_route]
 

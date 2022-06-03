@@ -1,6 +1,5 @@
 # https://pythonforundergradengineers.com/deploy-serverless-web-app-aws-lambda-zappa.html
 
-
 from flask import Flask
 from flask import render_template
 from flask_bootstrap import Bootstrap4

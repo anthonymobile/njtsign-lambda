@@ -5,6 +5,6 @@
         "profile_name": "starcitygroup_admin",
         "project_name": "njtsign-lambda",
         "runtime": "python3.9",
-        "s3_bucket": "zappa-8lhp5pdwt"
+        "s3_bucket": "zappa-jhxifexzy"
     }
 }

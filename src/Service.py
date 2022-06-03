@@ -83,7 +83,10 @@ def get_occupancies(arrivals):
         for route, arrivals_at_stop_on_route in arrival_dict.items():
             position = 0
             for a in arrivals_at_stop_on_route:              
-                arrivals[stop][route][position]['occupancy'] = occupancies[a['v']]
+                try:
+                    arrivals[stop][route][position]['occupancy'] = occupancies[a['v']]
+                except KeyError as e:
+                    pass
                 position += 1
   
     # until we update arrivals its just passing through here

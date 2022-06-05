@@ -2,15 +2,16 @@ import xml.etree.ElementTree
 from operator import itemgetter
 import urllib.request, urllib.error, urllib.parse
 from collections import defaultdict
+import ast
 
 from lxml import html
 from src.WebScraper import WebScraper
 
 import config as cfg
 
-def get_arrivals():
+def get_arrivals(watchlist):
     arrivals = defaultdict(dict)
-    for tuple in cfg.watchlist:
+    for tuple in ast.literal_eval(watchlist):
         stop=tuple[0]
         routelist = tuple[1]
         for route in routelist:

@@ -7,7 +7,7 @@ MAX_BACKUP_COUNT = 3
 # tuples of stop_id, [routelist] to watch
 
 ## works
-watchlist = [(30189, [85, 119]), (21062, [87]), (21765, [123])]
+# watchlist = [(30189, [85, 119]), (21062, [87]), (21765, [123])]
 
 ## testing
 # watchlist = [(30189, [85, 119]), (21062, [87]), (21765, [123]), (21065, [86])]

@@ -1,7 +1,6 @@
 # https://pythonforundergradengineers.com/deploy-serverless-web-app-aws-lambda-zappa.html
 
-from flask import Flask
-from flask import render_template
+from flask import Flask, request, render_template
 from flask_bootstrap import Bootstrap4
 
 from src.Service import get_arrivals
@@ -18,9 +17,10 @@ bootstrap = Bootstrap4(app)
 #################################
 
 @app.route('/')
-def index():
-    arrivals = get_arrivals()
+def index():   
+    arrivals = get_arrivals(request.args.get('watchlist'))
     return render_template('index.html', cfg=cfg, arrivals=arrivals)
+
 
 
 #################################
